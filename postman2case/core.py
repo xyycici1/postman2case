@@ -48,10 +48,14 @@ class PostmanParser(object):
             body = {}
             if item["request"]["body"] != {}:
                 mode = item["request"]["body"]["mode"]
-                if isinstance(item["request"]["body"][mode], list):
+                if isinstance(item["request"]["body"][mode], list): #formdata
                     for param in item["request"]["body"][mode]:
                         api["variables"].append({param["key"]: parse_value_from_type(param["value"])})
                         body[param["key"]] = "$"+param["key"]
+                else:
+                    raw = item["request"]["body"][mode]
+                    for key,value in raw.items():
+                        body[key] = value
             request["json"] = body
         else:
             request["url"] = url.split("?")[0]
