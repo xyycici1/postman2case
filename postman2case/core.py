@@ -48,14 +48,27 @@ class PostmanParser(object):
             body = {}
             if item["request"]["body"] != {}:
                 mode = item["request"]["body"]["mode"]
+
+                bodyKey = 'data'
+                if mode == 'json':
+                    bodyKey = 'json'
+
                 if isinstance(item["request"]["body"][mode], list): #formdata
                     for param in item["request"]["body"][mode]:
-                        api["variables"].append({param["key"]: parse_value_from_type(param["value"])})
+                        # api["variables"].append({param["key"]: parse_value_from_type(param["value"])})
                         body[param["key"]] = "$"+param["key"]
                 else:
-                    raw = item["request"]["body"][mode]
-                    for key,value in raw.items():
-                        body[key] = value
+                    j = item["request"]["body"][mode]
+                    raw = json.loads(j)
+
+                    if isinstance(raw, list):  # formdata
+                        print('哈哈')
+                    else:
+                        for key, value in raw.items():
+                            body[key] = value
+
+
+
             request["json"] = body
         else:
             request["url"] = url.split("?")[0]
@@ -89,7 +102,7 @@ class PostmanParser(object):
                     result.append({"api": api})
             else:
                 api = self.parse_each_item(folder)
-                result.append({"api": api})
+                result.append({"test": api})
 
         with io.open(output_testset_file, 'w', encoding="utf-8") as outfile:
             my_json_str = json.dumps(result, ensure_ascii=ensure_ascii, indent=4)
