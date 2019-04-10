@@ -1,7 +1,6 @@
 import io
 import json
 import logging
-from collections import OrderedDict
 
 from postman2case.compat import ensure_ascii
 from postman2case.parser import parse_value_from_type
@@ -48,28 +47,18 @@ class PostmanParser(object):
             body = {}
             if item["request"]["body"] != {}:
                 mode = item["request"]["body"]["mode"]
+                # data:表单数据，json:json数据
+                body_key = 'json' if mode == 'raw' else 'data'
 
-                bodyKey = 'data'
-                if mode == 'json':
-                    bodyKey = 'json'
-
-                if isinstance(item["request"]["body"][mode], list): #formdata
+                # formdata | urlencoded
+                if mode == 'formdata' or mode == 'urlencoded':
                     for param in item["request"]["body"][mode]:
-                        # api["variables"].append({param["key"]: parse_value_from_type(param["value"])})
-                        body[param["key"]] = "$"+param["key"]
-                else:
-                    j = item["request"]["body"][mode]
-                    raw = json.loads(j)
-
-                    if isinstance(raw, list):  # formdata
-                        print('哈哈')
-                    else:
-                        for key, value in raw.items():
-                            body[key] = value
-
-
-
-            request["json"] = body
+                        body[param["key"]] = parse_value_from_type(param["value"])
+                elif mode == 'raw':
+                    # json
+                    json_str = item["request"]["body"][mode]
+                    body = json.loads(json_str)
+            request[body_key] = body
         else:
             request["url"] = url.split("?")[0]
             headers = {}
